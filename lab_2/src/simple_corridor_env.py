@@ -27,9 +27,9 @@ class SimpleCorridor(gym.Env):
             self.cur_pos += 1
         done = self.cur_pos >= self.end_pos
         if done: #reached end of corridor
-            reward = 1
+            reward = 10
         else:
-            reward = 0
+            reward = 1
             
         if self.steps >= self.end_pos*10: #timeout
             done = True

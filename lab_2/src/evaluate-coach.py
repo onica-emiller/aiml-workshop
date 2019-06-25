@@ -20,7 +20,7 @@ class MyLauncher(SageMakerCoachPresetLauncher):
         """This points to a .py file that configures everything about the RL job.
         It can be overridden at runtime by specifying the RLCOACH_PRESET hyperparameter.
         """
-        return 'preset-tsp-easy'
+        return 'preset-simple-corridor'
     
     def start_single_threaded(self, task_parameters, graph_manager, args):
         """Override to use custom evaluate_steps, instead of infinite steps. Just evaluate.
