@@ -1,2 +1,0 @@
-# aiml-workshop
-test commit
