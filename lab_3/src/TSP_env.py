@@ -10,13 +10,13 @@ class TSPEasyEnv(gym.Env):
     def render(self, mode="human", close=False):
 
         if self.tsp_view is None:
-            self.tsp_view = TSPView2D(self.n_orders, self.map_quad, grid_size=25)
+            self.tsp_view = TSPView2D(self.n_tanks, self.map_quad, grid_size=25)
 
-        return self.tsp_view.update(self.agt_at_restaurant, self.restaurant_x, self.restaurant_y, self.o_delivery,
+        return self.tsp_view.update(self.agt_at_depot, self.depot_x, self.depot_y, self.o_delivery,
                                     self.o_x, self.o_y, self.agt_x, self.agt_y, mode)
 
-    def __init__(self, n_orders=4, map_quad=(2, 2), max_time=50, 
-                randomized_orders=False):
+    def __init__(self, n_tanks=4, map_quad=(2, 2), max_time=50, 
+                randomized_tanks=False):
 
         self.tsp_view = None
         self.map_quad = map_quad
@@ -24,18 +24,18 @@ class TSPEasyEnv(gym.Env):
         self.o_y = []
         self.o_x = []
         
-        self.randomized_orders = randomized_orders
+        self.randomized_tanks = randomized_tanks
 
-        self.n_orders = n_orders
-        self.restaurant_x = 0
-        self.restaurant_y = 0
+        self.n_tanks = n_tanks
+        self.depot_x = 0
+        self.depot_y = 0
 
         self.agt_x = None
         self.agt_y = None
 
         self.o_delivery = []
         self.o_time = []
-        self.agt_at_restaurant = None
+        self.agt_at_depot = None
         self.agt_time = None
 
         self.max_time = max_time
@@ -51,24 +51,24 @@ class TSPEasyEnv(gym.Env):
         # agent y,
         agt_y_min = [self.map_min_y]
         agt_y_max = [self.map_max_y]
-        # n_orders for x positions of orders,
-        o_x_min = [self.map_min_x for i in range(n_orders)]
-        o_x_max = [self.map_max_x for i in range(n_orders)]
-        # n_orders for y positions of orders,
-        o_y_min = [self.map_min_y for i in range(n_orders)]
-        o_y_max = [self.map_max_y for i in range(n_orders)]
+        # n_tanks for x positions of tanks,
+        o_x_min = [self.map_min_x for i in range(n_tanks)]
+        o_x_max = [self.map_max_x for i in range(n_tanks)]
+        # n_tanks for y positions of tanks,
+        o_y_min = [self.map_min_y for i in range(n_tanks)]
+        o_y_max = [self.map_max_y for i in range(n_tanks)]
 
         # whether delivered or not, 0 not delivered, 1 delivered
-        o_delivery_min = [0] * n_orders
-        o_delivery_max = [1] * n_orders
+        o_delivery_min = [0] * n_tanks
+        o_delivery_max = [1] * n_tanks
 
-        # whether agent is at restaurant or not
-        agt_at_restaurant_max = 1
-        agt_at_restaurant_min = 0
+        # whether agent is at depot or not
+        agt_at_depot_max = 1
+        agt_at_depot_min = 0
 
-        # Time since orders have been placed
-        o_time_min = [0] * n_orders
-        o_time_max = [max_time] * n_orders
+        # Time since tanks have been placed
+        o_time_min = [0] * n_tanks
+        o_time_max = [max_time] * n_tanks
 
         # Time since start
         agt_time_min = 0
@@ -77,11 +77,11 @@ class TSPEasyEnv(gym.Env):
         self.observation_space = spaces.Box(
             low=np.array(
                 agt_x_min + agt_y_min + o_x_min + o_y_min + [0] + [0] + o_delivery_min + [
-                    agt_at_restaurant_min] + o_time_min + [
+                    agt_at_depot_min] + o_time_min + [
                     agt_time_min] + [0]),
             high=np.array(
                 agt_x_max + agt_y_max + o_x_max + o_y_max + [0] + [0] + o_delivery_max + [
-                    agt_at_restaurant_max] + o_time_max + [
+                    agt_at_depot_max] + o_time_max + [
                     agt_time_max] + [self.max_time]),
             dtype=np.int16
         )
@@ -91,23 +91,23 @@ class TSPEasyEnv(gym.Env):
 
     def reset(self):
 
-        self.restaurant_x = 0
-        self.restaurant_y = 0
-        self.agt_x = self.restaurant_x
-        self.agt_y = self.restaurant_y
-        if self.randomized_orders:
-            # Enforce uniqueness of orders, to prevent multiple orders being placed on the same points
-            # And ensure actual orders in the episode are always == n_orders as expected
-            orders=[]
-            while len(sorted(set(orders))) != self.n_orders:
-                orders = [self.__receive_order() for i in range(self.n_orders)]
+        self.depot_x = 0
+        self.depot_y = 0
+        self.agt_x = self.depot_x
+        self.agt_y = self.depot_y
+        if self.randomized_tanks:
+            # Enforce uniqueness of tanks, to prevent multiple tanks being placed on the same points
+            # And ensure actual tanks in the episode are always == n_tanks as expected
+            tanks=[]
+            while len(sorted(set(tanks))) != self.n_tanks:
+                tanks = [self.__receive_order() for i in range(self.n_tanks)]
         else:
-            orders = [(-2, -2), (1,1), (2,0), (0, -2)] 
-        self.o_x = [x for x, y in orders]
-        self.o_y = [y for x, y in orders]
-        self.o_delivery = [0] * self.n_orders
-        self.o_time = [0] * self.n_orders
-        self.agt_at_restaurant = 1
+            tanks = [(-2, -2), (1,1), (2,0), (0, -2)] 
+        self.o_x = [x for x, y in tanks]
+        self.o_y = [y for x, y in tanks]
+        self.o_delivery = [0] * self.n_tanks
+        self.o_time = [0] * self.n_tanks
+        self.agt_at_depot = 1
         self.agt_time = 0
 
         return self.__compute_state()
@@ -120,7 +120,7 @@ class TSPEasyEnv(gym.Env):
         reward = self.__compute_reward() - reward_before_action
 
         # If agent completed the route and returned back to start, give additional reward
-        if (np.sum(self.o_delivery) == self.n_orders) and self.agt_at_restaurant:
+        if (np.sum(self.o_delivery) == self.n_tanks) and self.agt_at_depot:
             done = True
             reward += self.max_time * 0.1
 
@@ -145,35 +145,35 @@ class TSPEasyEnv(gym.Env):
             raise Exception("action: {action} is invalid")
 
         # Check for deliveries
-        for ix in range(self.n_orders):
+        for ix in range(self.n_tanks):
             if self.o_delivery[ix] == 0:
                 if (self.o_x[ix] == self.agt_x) and (self.o_y[ix] == self.agt_y):
                     self.o_delivery[ix] = 1
 
-        # Update the time for the waiting orders
-        for ix in range(self.n_orders):
+        # Update the time for the waiting tanks
+        for ix in range(self.n_tanks):
             if self.o_delivery[ix] == 0:
                 self.o_time[ix] += 1
 
-        # Update time since agent left restaurant
+        # Update time since agent left depot
         self.agt_time += 1
 
-        # Check if agent is at restaurant
-        self.agt_at_restaurant = int((self.agt_x == self.restaurant_x) and (self.agt_y == self.restaurant_y))
+        # Check if agent is at depot
+        self.agt_at_depot = int((self.agt_x == self.depot_x) and (self.agt_y == self.depot_y))
 
     def __compute_state(self):
-        return [self.agt_x] + [self.agt_y] + self.o_x + self.o_y + [self.restaurant_x] + [
-            self.restaurant_y] + self.o_delivery + [
-                   self.agt_at_restaurant] + self.o_time + [
+        return [self.agt_x] + [self.agt_y] + self.o_x + self.o_y + [self.depot_x] + [
+            self.depot_y] + self.o_delivery + [
+                   self.agt_at_depot] + self.o_time + [
                    self.agt_time] + [(self.max_time - self.agt_time)]
 
     def __receive_order(self):
 
-        # Generate a single order, not at the center (where the restaurant is)
+        # Generate a single order, not at the center (where the depot is)
         self.order_x = \
-            np.random.choice([i for i in range(self.map_min_x, self.map_max_x + 1) if i != self.restaurant_x], 1)[0]
+            np.random.choice([i for i in range(self.map_min_x, self.map_max_x + 1) if i != self.depot_x], 1)[0]
         self.order_y = \
-            np.random.choice([i for i in range(self.map_min_y, self.map_max_y + 1) if i != self.restaurant_y], 1)[0]
+            np.random.choice([i for i in range(self.map_min_y, self.map_max_y + 1) if i != self.depot_y], 1)[0]
 
         return self.order_x, self.order_y
 
@@ -182,9 +182,9 @@ class TSPEasyEnv(gym.Env):
                - self.agt_time
 
 class TSPMediumEnv(TSPEasyEnv):
-    def __init__(self, n_orders=8, map_quad=(3, 3), max_time=400, randomized_orders=True):
-        super().__init__(n_orders, map_quad, max_time, randomized_orders)
+    def __init__(self, n_tanks=8, map_quad=(3, 3), max_time=400, randomized_tanks=True):
+        super().__init__(n_tanks, map_quad, max_time, randomized_tanks)
 
 class TSPHardEnv(TSPEasyEnv):
-    def __init__(self, n_orders=10, map_quad=(10, 10), max_time=5000, randomized_orders=True):
-        super().__init__(n_orders, map_quad, max_time, randomized_orders)
+    def __init__(self, n_tanks=10, map_quad=(10, 10), max_time=5000, randomized_tanks=True):
+        super().__init__(n_tanks, map_quad, max_time, randomized_tanks)
